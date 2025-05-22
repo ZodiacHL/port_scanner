@@ -17,7 +17,7 @@ def start_scan():
     host = entry_host.get().strip()
 
     try:
-    resolved_ip = socket.gethostbyname(host)
+        resolved_ip = socket.gethostbyname(host)
     except socket.gaierror as e:
         messagebox.showerror(
             "Invalid Host", 

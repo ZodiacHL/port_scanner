@@ -16,8 +16,8 @@ This is a beginner-friendly Python port scanner with a **Graphical User Interfac
 
 ## 📸 Screenshot
 
-> _[You can add a screenshot here once it's uploaded to your GitHub repo]_  
-> Example: `![GUI Screenshot](screenshot.png)`
+![image](https://github.com/user-attachments/assets/991c62e2-4ecb-459c-9c21-8f7defd0c2fc)
+
 
 ---
 

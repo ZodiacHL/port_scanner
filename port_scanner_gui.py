@@ -3,17 +3,15 @@ import threading
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 
-def scan_port(host, port, results, progress_callback):
+def scan_port(host, port, results, update_progress):
     try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(0.5)
-        result = sock.connect_ex((host, port))
-        if result == 0:
-            results.append(port)
-        sock.close()
-    except:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(0.5)
+            if sock.connect_ex((host, port)) == 0:
+                results.append(port)
+    except Exception:
         pass
-    progress_callback()
+    update_progress()
 
 def start_scan():
     host = entry_host.get().strip()
@@ -21,25 +19,23 @@ def start_scan():
     try:
         resolved_ip = socket.gethostbyname(host)
     except socket.gaierror:
-        messagebox.showerror("Invalid Host", f"Could not resolve '{host}'. Check your spelling or internet connection.")
+        messagebox.showerror("Invalid Host", f"Could not resolve '{host}'. Check your network connection or use an IP.")
         return
 
     try:
-        start = int(entry_start.get())
-        end = int(entry_end.get())
+        start_port = int(entry_start.get())
+        end_port = int(entry_end.get())
+        if not (1 <= start_port <= 65535) or not (1 <= end_port <= 65535) or start_port > end_port:
+            raise ValueError
     except ValueError:
-        messagebox.showerror("Input Error", "Port numbers must be integers.")
-        return
-
-    if start < 1 or end > 65535 or start > end:
-        messagebox.showerror("Input Error", "Invalid port range.")
+        messagebox.showerror("Invalid Input", "Please enter a valid port range (1–65535).")
         return
 
     output_box.delete("1.0", tk.END)
     progress["value"] = 0
+    progress["maximum"] = end_port - start_port + 1
     scan_button.config(state="disabled")
-    total_ports = end - start + 1
-    progress["maximum"] = total_ports
+
     results = []
 
     def update_progress():
@@ -47,21 +43,23 @@ def start_scan():
         root.update_idletasks()
 
     def run_scan():
-        for port in range(start, end + 1):
-            scan_port(host, port, results, update_progress)
-        output_box.insert(tk.END, f"Scan complete for {host}\n")
+        for port in range(start_port, end_port + 1):
+            scan_port(resolved_ip, port, results, update_progress)
+
+        output_box.insert(tk.END, f"Scan complete for {host} ({resolved_ip})\n")
         if results:
             output_box.insert(tk.END, f"Open ports: {', '.join(map(str, results))}\n")
         else:
             output_box.insert(tk.END, "No open ports found.\n")
+
         scan_button.config(state="normal")
 
-    threading.Thread(target=run_scan).start()
+    threading.Thread(target=run_scan, daemon=True).start()
 
-# GUI Setup
+# --- GUI Setup ---
 root = tk.Tk()
 root.title("Port Scanner")
-root.geometry("400x400")
+root.geometry("420x400")
 root.resizable(False, False)
 
 frame = tk.Frame(root)
@@ -70,6 +68,7 @@ frame.pack(pady=10)
 tk.Label(frame, text="Target Host/IP:").grid(row=0, column=0, sticky="e")
 entry_host = tk.Entry(frame)
 entry_host.grid(row=0, column=1)
+entry_host.insert(0, "127.0.0.1")
 
 tk.Label(frame, text="Start Port:").grid(row=1, column=0, sticky="e")
 entry_start = tk.Entry(frame)
@@ -87,7 +86,7 @@ scan_button.pack(pady=10)
 progress = ttk.Progressbar(root, orient="horizontal", length=300, mode="determinate")
 progress.pack(pady=5)
 
-output_box = scrolledtext.ScrolledText(root, height=10, width=45)
+output_box = scrolledtext.ScrolledText(root, height=10, width=50)
 output_box.pack(pady=10)
 
 root.mainloop()

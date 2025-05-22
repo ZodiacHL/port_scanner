@@ -17,10 +17,14 @@ def scan_port(host, port, results, progress_callback):
 
 def start_scan():
     host = entry_host.get()
-    try:
-        socket.gethostbyname(host)
+        try:
+        resolved_ip = socket.gethostbyname(host)
     except socket.gaierror:
-        messagebox.showerror("Invalid Host", "Could not resolve host.")
+        messagebox.showerror("Invalid Host", f"Could not resolve '{host}'. Check your internet or try an IP address.")
+        return
+
+    if not resolved_ip:
+        messagebox.showerror("Invalid Host", f"Host '{host}' could not be resolved.")
         return
 
     try:

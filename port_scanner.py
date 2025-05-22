@@ -31,3 +31,5 @@ if __name__ == "__main__":
     end_port = int(end) if end.isdigit() else 1024
 
     scan_ports(target, start_port, end_port)
+
+    input("\nPress Enter to exit...")
